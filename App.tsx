@@ -4,7 +4,7 @@
  * Fully responsive for all mobile screen sizes
  */
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import {
   StatusBar,
   StyleSheet,
@@ -17,6 +17,8 @@ import {
   Linking,
   ScrollView,
   Dimensions,
+  Animated,
+  Easing
 } from 'react-native';
 import {
   SafeAreaProvider,
@@ -74,6 +76,11 @@ function AppContent() {
   const [ads, setAds] = useState<any[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [barWidth, setBarWidth] = useState(0);
+
+  // ⏳ Animated progress value
+  const progress = useRef(new Animated.Value(0)).current;
+  const duration = 5000; // 5 seconds
 
   const stylesDidYouKnow = StyleSheet.create({
     container: {
@@ -183,6 +190,28 @@ function AppContent() {
     fetchData();
   }, []);
 
+  // 👉 Start animation when ad changes
+useEffect(() => {
+  if (ads.length > 0) {
+    progress.setValue(0);
+
+    // Run progress bar animation (visual only)
+    Animated.timing(progress, {
+      toValue: 1,
+      duration,
+      easing: Easing.linear,
+      useNativeDriver: false,
+    }).start();
+
+    // 🔥 Trigger next screen exactly at `duration`
+    const timer = setTimeout(() => {
+      showNext();   // instant switch
+    }, duration);
+
+    return () => clearTimeout(timer);
+  }
+}, [currentIndex, ads]);
+
   const showNext = () => {
     if (currentIndex < ads.length - 1) {
       setCurrentIndex(currentIndex + 1);
@@ -291,20 +320,50 @@ function AppContent() {
         marginBottom: verticalScale(8),
         paddingHorizontal: scale(0)
       }}>
-        {[0, 1].map((i) => (
-          <View
-            key={i}
-            style={{
-              flex: 1,
-              height: verticalScale(4),
-              marginHorizontal: scale(4),
-              borderRadius: 2,
-              backgroundColor: currentIndex === i ? '#fff' : 'rgba(255, 255, 255, 0.63)',
-              opacity: currentIndex === i ? 1 : 0.5,
-              minHeight: 3,
-            }}
-          />
-        ))}
+        {[0, 1].map((i) => {
+          const barWidth = progress.interpolate({
+            inputRange: [0, 1],
+            outputRange: [0, 100], // percent width
+          });
+          return (
+            <View
+              key={i}
+              style={{
+                flex: 1,
+                height: verticalScale(4),
+                marginHorizontal: scale(4),
+                borderRadius: 2,
+                backgroundColor: 'rgba(255, 255, 255, 0.3)',
+                overflow: 'hidden',
+                minHeight: 3,
+              }}
+            >
+              {currentIndex === i && (
+                <Animated.View
+                  style={{
+                    height: '100%',
+                    // ✅ use numeric width instead of percentage string
+                    width: progress.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [0, screenWidth], // full device width
+                    }),
+                    backgroundColor: '#fff',
+                  }}
+                />
+              )}
+              {currentIndex > i && (
+                <View
+                  style={{
+                    height: '100%',
+                    width: '100%',
+                    backgroundColor: '#fff',
+                  }}
+                />
+              )}
+            </View>
+
+          );
+        })}
       </View>
 
       {/* Content */}
