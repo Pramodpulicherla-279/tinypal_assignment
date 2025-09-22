@@ -15,13 +15,14 @@ import {
   useColorScheme,
   Linking,
   ScrollView,
-} from 'react-native';
+  } from 'react-native';
 import {
   SafeAreaProvider,
   useSafeAreaInsets,
 } from 'react-native-safe-area-context';
 import MaskedView from '@react-native-masked-view/masked-view';
 import Svg, { Path } from 'react-native-svg';
+import FlashcardMaskSvg from './assets/images/flashcard.svg';
 
 function App() {
   const isDarkMode = useColorScheme() === 'dark';
@@ -85,27 +86,31 @@ function AppContent() {
       resizeMode: 'cover',
       borderRadius: 40,
       borderWidth: 2,
-      // borderColor: '#ffb84d',
     },
     title: {
       color: '#fff',
-      fontSize: 22,
+      fontSize: 24,
       fontWeight: 'bold',
-      marginTop: 20,
-      textAlign: 'center',
+      marginTop: 0, // Increased margin for better positioning
+      textAlign: 'left',
       paddingHorizontal: 20,
+      zIndex: 10000,
+      textShadowColor: 'rgba(0, 0, 0, 0.8)', // Added text shadow for better visibility
+      textShadowOffset: { width: 1, height: 1 },
+      textShadowRadius: 3,
     },
     text: {
       color: '#fff',
-      fontSize: 16,
-      marginTop: 80,
-      textAlign: 'center',
+      fontSize: 18, // Increased font size
+      marginTop: 30, // Adjusted margin
+      textAlign: 'left',
       paddingHorizontal: 20,
+      lineHeight: 24, // Added line height for better readability
+      textShadowColor: 'rgba(0, 0, 0, 0.8)', // Added text shadow for better visibility
+      textShadowOffset: { width: 1, height: 1 },
+      textShadowRadius: 3,
     },
   });
-
-
-
 
   // Fetch both API endpoints
   useEffect(() => {
@@ -116,7 +121,6 @@ function AppContent() {
           fetch('https://genai-images-4ea9c0ca90c8.herokuapp.com/flashcard').then((r) => r.json()),
         ]);
         console.log('Fetched data:', { didYouKnowRes: didYouKnowRes.image_url, flashcardRes: flashcardRes.image_url });
-
 
         // Normalize data into a common structure
         const formattedData = [
@@ -177,6 +181,26 @@ function AppContent() {
 
   const headerBgColor = currentAd.type === 'did_you_know' ? '#ce8ecdff' : '#6764b7ff';
 
+  // Mask for 'did_you_know' with an upward curve
+  const DidYouKnowMask = (
+    <Svg
+      width="100%"
+      height="100%"
+      viewBox="0 0 100 100"
+      preserveAspectRatio="none"
+    >
+      <Path
+        d="M0,10 Q50,-10 100,10 L100,100 L0,100 Z"
+        fill="black"
+      />
+    </Svg>
+  );
+
+  // A different mask for 'flashcard', e.g., with a wave shape
+  const FlashcardMask = (
+    <FlashcardMaskSvg width="100%" height="800px" preserveAspectRatio="none" />
+  );
+
   return (
     <TouchableOpacity
       style={[adStyles.container, { paddingTop: safeAreaInsets.top, paddingBottom: safeAreaInsets.bottom }]}
@@ -199,6 +223,7 @@ function AppContent() {
           </Text>
         </View>
       </View>
+
       {/* Status Bar */}
       <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginTop: 8, marginBottom: 8 }}>
         {[0, 1].map((i) => (
@@ -215,6 +240,7 @@ function AppContent() {
           />
         ))}
       </View>
+
       {/* Content */}
       <Image source={{ uri: currentAd.image }} style={adStyles.image} />
 
@@ -233,32 +259,62 @@ function AppContent() {
         />
       )}
 
-      <MaskedView
-        style={{ flex: 1, marginTop: 250, paddingTop: 0, }}
-        maskElement={
-          <Svg
-            width="100%"
-            height="100%"
-            viewBox="0 0 100 100"
-            preserveAspectRatio="none"
-          >
-            <Path
-              d="M0,10 Q50,-10 100,10 L100,100 L0,100 Z"
-              fill="black"
-            />
-          </Svg>
-        }
-      >
-        <ScrollView
-          contentContainerStyle={{
-            flexGrow: 1,
-            backgroundColor: headerBgColor,
-            padding: 20,
-          }}
-        >
-          <Text style={adStyles.title}>{currentAd.title}</Text>
+      {/* Different rendering approach for flashcard vs did_you_know */}
+      {currentAd.type === 'flashcard' ? (
+        <View style={{
+          position: 'absolute',
+          top: -60, // Position the start of the content area
+          left: 0,
+          right: 0,
+          bottom: 0,
+          alignItems: 'center',
+        }}>
+          {/* The SVG now acts as a background shape for the text content. */}
+          <View style={{ position: 'absolute', top: 60, left: 0, right: 0, bottom: 0 }}>
+            <FlashcardMaskSvg width="100%" height="130%" preserveAspectRatio="none" />
+          </View>
 
-          {currentAd.type === 'did_you_know' && (
+          {/* This container holds the text and is centered on the SVG. */}
+          <View style={{
+            flex: 1,
+            justifyContent: 'flex-start',
+            paddingTop: 450, // Adjust this to position text vertically on the SVG
+            paddingHorizontal: 40,
+            width: '100%',
+          }}>
+            <View style={{ flexDirection: 'row' }}>
+              <View style={{ width: 4, backgroundColor: 'white', marginRight: 12, borderRadius: 1.5, height: 220 }} />
+              <View style={{ flex: 1 }}>
+                <Text style={[adStyles.title, { color: '#fff', fontSize: 28, fontWeight: 'bold' }]}>
+                  {currentAd.title}
+                </Text>
+                <Text style={[adStyles.text, { color: '#fff', fontSize: 20, marginTop: 20 }]}>
+                  {currentAd.content}
+                </Text>
+              </View>
+            </View>
+          </View>
+        </View>
+      ) : (
+        // For did_you_know: use MaskedView as before
+        <MaskedView
+          style={{
+            flex: 1,
+            marginTop: 250,
+            paddingTop: 0
+          }}
+          maskElement={DidYouKnowMask}
+        >
+          <ScrollView
+            contentContainerStyle={{
+              flexGrow: 1,
+              backgroundColor: headerBgColor,
+              padding: 20,
+              zIndex: 1000,
+            }}
+          >
+            <Text style={adStyles.title}>{currentAd.title}</Text>
+
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginTop: 20 }}>
               {/* Cause Box */}
               <View style={[styles.extraBox, { flex: 1, height: 120, alignItems: 'center', backgroundColor: '#dbaad9ff', borderRadius: 12, marginRight: 8, paddingVertical: 12, borderColor: '#fff', borderWidth: 1.5, justifyContent: 'center' }]}>
@@ -273,33 +329,30 @@ function AppContent() {
                   width: 40,
                   height: 40,
                   transform: [{ scaleY: -1 }, { rotate: '-10deg' }],
-
-                  // marginHorizontal: 10,
-
                 }}
               />
               {/* Effect Box */}
-              <View style={[styles.extraBox, { flex: 1, height: 120, alignItems: 'center', backgroundColor: '#dbaad9ff', borderRadius: 12, marginLeft: 8, paddingVertical: 12,  borderColor: '#fff', borderWidth: 1.5, justifyContent: 'center' }]}>
+              <View style={[styles.extraBox, { flex: 1, height: 120, alignItems: 'center', backgroundColor: '#dbaad9ff', borderRadius: 12, marginLeft: 8, paddingVertical: 12, borderColor: '#fff', borderWidth: 1.5, justifyContent: 'center' }]}>
                 <Text style={[styles.extraText, { color: '#fff' }]}>
                   {currentAd.cause_and_effect?.effect}
                 </Text>
               </View>
             </View>
-          )}
-          
-          <Text style={adStyles.text}>{currentAd.content}</Text>
 
-          {/* Citation link below the row */}
-          {currentAd.type === 'did_you_know' && currentAd.citation?.label && (
-            <Text
-              style={[styles.extraText, { color: '#ffbb4dff', textDecorationLine: 'underline', textAlign: 'center', marginTop: 140, fontSize: 18 }]}
-              onPress={() => Linking.openURL(currentAd.citation?.url)}
-            >
-              {currentAd.citation?.label}
-            </Text>
-          )}
-        </ScrollView>
-      </MaskedView>
+            <Text style={adStyles.text}>{currentAd.content}</Text>
+
+            {/* Citation link below the row */}
+            {currentAd.citation?.label && (
+              <Text
+                style={[styles.extraText, { color: '#ffbb4dff', textDecorationLine: 'underline', textAlign: 'center', marginTop: 140, fontSize: 18 }]}
+                onPress={() => Linking.openURL(currentAd.citation?.url)}
+              >
+                {currentAd.citation?.label}
+              </Text>
+            )}
+          </ScrollView>
+        </MaskedView>
+      )}
     </TouchableOpacity>
   );
 }
@@ -313,7 +366,6 @@ const styles = StyleSheet.create({
     width: '100%',
     height: 'auto',
     resizeMode: 'cover',
-
   },
   title: {
     color: '#fff',
@@ -340,6 +392,5 @@ const styles = StyleSheet.create({
     marginBottom: 5,
   },
 });
-
 
 export default App;
