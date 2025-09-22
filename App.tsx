@@ -1,6 +1,7 @@
 /**
  * Sample React Native App - Modified to show Ads like WhatsApp status
  * Based on /did_you_know and /flashcard API responses
+ * Fully responsive for all mobile screen sizes
  */
 
 import React, { useEffect, useState } from 'react';
@@ -15,7 +16,8 @@ import {
   useColorScheme,
   Linking,
   ScrollView,
-  } from 'react-native';
+  Dimensions,
+} from 'react-native';
 import {
   SafeAreaProvider,
   useSafeAreaInsets,
@@ -23,6 +25,8 @@ import {
 import MaskedView from '@react-native-masked-view/masked-view';
 import Svg, { Path } from 'react-native-svg';
 import FlashcardMaskSvg from './assets/images/flashcard.svg';
+import LinearGradient from 'react-native-linear-gradient';
+
 
 function App() {
   const isDarkMode = useColorScheme() === 'dark';
@@ -34,6 +38,36 @@ function App() {
     </SafeAreaProvider>
   );
 }
+
+const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
+
+// Enhanced responsive scaling utilities
+const baseWidth = 375; // iPhone X width as base
+const baseHeight = 812; // iPhone X height as base
+
+// Scale function for width-based elements
+const scale = (size: number) => (screenWidth / baseWidth) * size;
+
+// Vertical scale for height-based elements
+const verticalScale = (size: number) => (screenHeight / baseHeight) * size;
+
+// Moderate scale with factor - more controlled scaling
+const moderateScale = (size: number, factor = 0.5) => {
+  return size + (scale(size) - size) * factor;
+};
+
+// Responsive font scaling with min/max limits
+const responsiveFont = (size: number, minSize?: number, maxSize?: number) => {
+  const scaledSize = moderateScale(size, 0.3);
+  if (minSize && scaledSize < minSize) return minSize;
+  if (maxSize && scaledSize > maxSize) return maxSize;
+  return scaledSize;
+};
+
+// Device type detection
+const isSmallDevice = screenWidth < 250;
+const isLargeDevice = screenWidth > 414;
+const isVeryTallDevice = screenHeight > 900;
 
 function AppContent() {
   const safeAreaInsets = useSafeAreaInsets();
@@ -48,27 +82,29 @@ function AppContent() {
     },
     image: {
       position: 'absolute',
-      top: 100,
+      top: verticalScale(60) + (isSmallDevice ? 60 : 0),
       left: 0,
       width: '100%',
-      height: 330,
+      height: verticalScale(330) + (isSmallDevice ? -30 : isLargeDevice ? 20 : 0),
       resizeMode: 'cover',
-      borderRadius: 40,
+      borderRadius: moderateScale(40),
     },
     title: {
       color: '#fff',
-      fontSize: 24,
+      fontSize: responsiveFont(24, 20, 28),
       fontWeight: 'bold',
-      marginTop: 50,
+      marginTop: verticalScale(50),
       textAlign: 'center',
-      paddingHorizontal: 20,
+      paddingHorizontal: scale(20),
+      lineHeight: responsiveFont(30, 24, 36),
     },
     text: {
       color: '#fff',
-      fontSize: 17,
-      marginTop: 50,
+      fontSize: responsiveFont(16, 14, 18),
+      marginTop: verticalScale(36),
       textAlign: 'center',
-      paddingHorizontal: 20,
+      paddingHorizontal: scale(20),
+      lineHeight: responsiveFont(22, 18, 26),
     },
   });
 
@@ -79,36 +115,31 @@ function AppContent() {
     },
     image: {
       position: 'absolute',
-      top: 100,
+      top: verticalScale(60) + (isSmallDevice ? -10 : 0),
       left: 0,
       width: '100%',
-      height: 330,
+      height: verticalScale(330) + (isSmallDevice ? -30 : isLargeDevice ? 20 : 0),
       resizeMode: 'cover',
-      borderRadius: 40,
+      borderRadius: moderateScale(40),
       borderWidth: 2,
     },
     title: {
       color: '#fff',
-      fontSize: 24,
+      fontSize: responsiveFont(24, 20, 32),
       fontWeight: 'bold',
-      marginTop: 0, // Increased margin for better positioning
+      marginTop: 0,
       textAlign: 'left',
-      paddingHorizontal: 20,
+      paddingHorizontal: scale(20),
       zIndex: 10000,
-      textShadowColor: 'rgba(0, 0, 0, 0.8)', // Added text shadow for better visibility
-      textShadowOffset: { width: 1, height: 1 },
-      textShadowRadius: 3,
+      lineHeight: responsiveFont(30, 24, 40),
     },
     text: {
-      color: '#fff',
-      fontSize: 18, // Increased font size
-      marginTop: 30, // Adjusted margin
+      color: '#ffffffc1',
+      fontSize: responsiveFont(16, 14, 18),
+      marginTop: verticalScale(30),
       textAlign: 'left',
-      paddingHorizontal: 20,
-      lineHeight: 24, // Added line height for better readability
-      textShadowColor: 'rgba(0, 0, 0, 0.8)', // Added text shadow for better visibility
-      textShadowOffset: { width: 1, height: 1 },
-      textShadowRadius: 3,
+      paddingHorizontal: scale(20),
+      lineHeight: responsiveFont(24, 20, 28),
     },
   });
 
@@ -171,7 +202,7 @@ function AppContent() {
   if (ads.length === 0) {
     return (
       <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
-        <Text>No ads available</Text>
+        <Text style={{ color: '#fff', fontSize: responsiveFont(16) }}>No ads available</Text>
       </View>
     );
   }
@@ -180,6 +211,10 @@ function AppContent() {
   const adStyles = currentAd.type === 'did_you_know' ? stylesDidYouKnow : stylesFlashcard;
 
   const headerBgColor = currentAd.type === 'did_you_know' ? '#ce8ecdff' : '#6764b7ff';
+
+  // Responsive positioning calculations
+  const flashcardContentTopPosition = verticalScale(450) + (isSmallDevice ? -60 : isLargeDevice ? 40 : 0);
+  const didYouKnowMaskMargin = verticalScale(210) + (isSmallDevice ? -30 : isLargeDevice ? 20 : 0);
 
   // Mask for 'did_you_know' with an upward curve
   const DidYouKnowMask = (
@@ -196,11 +231,6 @@ function AppContent() {
     </Svg>
   );
 
-  // A different mask for 'flashcard', e.g., with a wave shape
-  const FlashcardMask = (
-    <FlashcardMaskSvg width="100%" height="800px" preserveAspectRatio="none" />
-  );
-
   return (
     <TouchableOpacity
       style={[adStyles.container, { paddingTop: safeAreaInsets.top, paddingBottom: safeAreaInsets.bottom }]}
@@ -208,34 +238,70 @@ function AppContent() {
       activeOpacity={1}
     >
       {/* Header */}
-      <View style={{ flexDirection: 'row', alignItems: 'center', padding: 16 }}>
+      <View style={{
+        flexDirection: 'row',
+        alignItems: 'center',
+        padding: scale(12),
+        paddingHorizontal: scale(16)
+      }}>
         <TouchableOpacity>
-          <Image source={require('./assets/images/back.png')} style={{ width: 28, height: 28 }} />
+          <Image
+            source={require('./assets/images/back.png')}
+            style={{
+              width: scale(22),
+              height: scale(22),
+              minWidth: 18,
+              minHeight: 18
+            }}
+          />
         </TouchableOpacity>
         {/* Divider line */}
-        <View style={{ width: 1, height: 32, backgroundColor: '#fff', marginHorizontal: 12 }} />
-        <View style={{ marginLeft: 12 }}>
-          <Text style={{ color: '#fff', fontSize: 20 }}>
-            {currentAd.type === 'did_you_know' ? 'UNLEARN OLD PATTERNS' : 'UNLEARN OLD PATTERNS'}
+        <View style={{
+          width: 2,
+          height: verticalScale(32),
+          backgroundColor: '#9d9d9dff',
+          marginHorizontal: scale(12),
+          minHeight: 24
+        }} />
+        <View style={{ marginLeft: scale(0), flex: 1 }}>
+          <Text style={{
+            color: '#fff',
+            fontSize: responsiveFont(14, 12, 16),
+            fontWeight: '600'
+          }}>
+            UNLEARN OLD PATTERNS
           </Text>
-          <Text style={{ color: '#fff', fontSize: 12, marginTop: 2 }}>
+          <Text style={{
+            color: '#9d9d9dff',
+            fontSize: responsiveFont(12, 10, 14),
+            marginTop: 2
+          }}>
             {currentAd.type === 'did_you_know' ? 'Distraction = No No!' : 'Distractions 101'}
           </Text>
         </View>
       </View>
 
       {/* Status Bar */}
-      <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginTop: 8, marginBottom: 8 }}>
+      <View style={{
+        flexDirection: 'row',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginTop: verticalScale(26) + (isSmallDevice ? -8 : 0),
+        zIndex: 10000,
+        marginBottom: verticalScale(8),
+        paddingHorizontal: scale(0)
+      }}>
         {[0, 1].map((i) => (
           <View
             key={i}
             style={{
               flex: 1,
-              height: 4,
-              marginHorizontal: 4,
+              height: verticalScale(4),
+              marginHorizontal: scale(4),
               borderRadius: 2,
-              backgroundColor: currentIndex === i ? '#fff' : 'rgba(255,255,255,0.3)',
+              backgroundColor: currentIndex === i ? '#fff' : 'rgba(255, 255, 255, 0.63)',
               opacity: currentIndex === i ? 1 : 0.5,
+              minHeight: 3,
             }}
           />
         ))}
@@ -245,50 +311,77 @@ function AppContent() {
       <Image source={{ uri: currentAd.image }} style={adStyles.image} />
 
       {currentAd.type === 'did_you_know' && (
-        <Image
-          source={require('./assets/images/img1.png')}
-          style={{
-            width: 180,
-            height: 130,
-            alignSelf: 'center',
-            marginTop: 290,
-            zIndex: 1,
-            position: 'absolute',
-            resizeMode: 'contain'
-          }}
-        />
+        <View style={styles.imageShadow}>
+          <Image
+            source={require('./assets/images/img1.png')}
+            style={{
+              width: '100%',
+              height: '100%',
+              resizeMode: 'contain',
+            }}
+          />
+        </View>
       )}
 
       {/* Different rendering approach for flashcard vs did_you_know */}
       {currentAd.type === 'flashcard' ? (
         <View style={{
           position: 'absolute',
-          top: -60, // Position the start of the content area
+          top: verticalScale(-60) + (isSmallDevice ? 20 : 0),
           left: 0,
           right: 0,
           bottom: 0,
           alignItems: 'center',
         }}>
           {/* The SVG now acts as a background shape for the text content. */}
-          <View style={{ position: 'absolute', top: 60, left: 0, right: 0, bottom: 0 }}>
-            <FlashcardMaskSvg width="100%" height="130%" preserveAspectRatio="none" />
+          <View style={{
+            position: 'absolute',
+            top: verticalScale(60),
+            left: scale(-10),
+            right: scale(-10),
+            bottom: 0,
+            width: screenWidth + scale(20),
+            alignSelf: 'center'
+          }}>
+            <FlashcardMaskSvg
+              width="100%"
+              height={isVeryTallDevice ? "120%" : "130%"}
+              preserveAspectRatio="none"
+            />
           </View>
 
           {/* This container holds the text and is centered on the SVG. */}
           <View style={{
             flex: 1,
             justifyContent: 'flex-start',
-            paddingTop: 450, // Adjust this to position text vertically on the SVG
-            paddingHorizontal: 40,
+            paddingTop: flashcardContentTopPosition,
+            paddingHorizontal: scale(40) + (isSmallDevice ? -8 : isLargeDevice ? 8 : 0),
             width: '100%',
           }}>
             <View style={{ flexDirection: 'row' }}>
-              <View style={{ width: 4, backgroundColor: 'white', marginRight: 12, borderRadius: 1.5, height: 220 }} />
+              <View style={{
+                width: scale(4),
+                backgroundColor: 'white',
+                marginRight: scale(12),
+                borderRadius: 1.5,
+                height: verticalScale(220) + (isSmallDevice ? -40 : isLargeDevice ? 40 : 0),
+                marginTop: verticalScale(0),
+                minWidth: 3,
+                minHeight: 120
+              }} />
               <View style={{ flex: 1 }}>
-                <Text style={[adStyles.title, { color: '#fff', fontSize: 28, fontWeight: 'bold' }]}>
+                <Text style={[adStyles.title, {
+                  color: '#fff',
+                  fontSize: responsiveFont(28, 22, 36),
+                  fontWeight: 'bold'
+                }]}>
                   {currentAd.title}
                 </Text>
-                <Text style={[adStyles.text, { color: '#fff', fontSize: 20, marginTop: 20 }]}>
+                <Text style={[adStyles.text, {
+                  color: '#ffffffc1',
+                  fontSize: responsiveFont(16, 14, 18),
+                  marginTop: verticalScale(20)
+                }]}>
                   {currentAd.content}
                 </Text>
               </View>
@@ -300,7 +393,7 @@ function AppContent() {
         <MaskedView
           style={{
             flex: 1,
-            marginTop: 250,
+            marginTop: didYouKnowMaskMargin,
             paddingTop: 0
           }}
           maskElement={DidYouKnowMask}
@@ -308,48 +401,111 @@ function AppContent() {
           <ScrollView
             contentContainerStyle={{
               flexGrow: 1,
-              backgroundColor: headerBgColor,
-              padding: 20,
               zIndex: 1000,
+              minHeight: screenHeight * 0.4,
             }}
+            showsVerticalScrollIndicator={false}
           >
-            <Text style={adStyles.title}>{currentAd.title}</Text>
+            <LinearGradient
+              colors={['#ce8ecdff', '#955e93ff']} // top → bottom colors
+              style={{
+                flex: 1,
+                padding: scale(20),
+                borderRadius: 0,
+                minHeight: screenHeight * 0.4,
+              }}
+            >
+              {/* Your inner content goes here */}
+              <View style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'center',
+                marginTop: verticalScale(30) + (isSmallDevice ? -10 : 0),
+                flexWrap: isSmallDevice ? 'wrap' : 'nowrap'
+              }}>
+                {/* Cause Box */}
+                <View style={[styles.extraBox, {
+                  flex: isSmallDevice ? undefined : 1,
+                  width: isSmallDevice ? '100%' : undefined,
+                  height: verticalScale(100) + (isSmallDevice ? -20 : 0),
+                  alignItems: 'center',
+                  backgroundColor: '#dbaad9ff',
+                  borderRadius: 12,
+                  marginRight: isSmallDevice ? 0 : scale(8),
+                  marginBottom: isSmallDevice ? scale(12) : 0,
+                  paddingVertical: verticalScale(12),
+                  borderColor: '#fff',
+                  borderWidth: 1.5,
+                  justifyContent: 'center',
+                  minHeight: 80
+                }]}>
+                  <Text style={[styles.extraText, { color: '#fff' }]}>
+                    {currentAd.cause_and_effect?.cause}
+                  </Text>
+                </View>
 
-            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginTop: 20 }}>
-              {/* Cause Box */}
-              <View style={[styles.extraBox, { flex: 1, height: 120, alignItems: 'center', backgroundColor: '#dbaad9ff', borderRadius: 12, marginRight: 8, paddingVertical: 12, borderColor: '#fff', borderWidth: 1.5, justifyContent: 'center' }]}>
-                <Text style={[styles.extraText, { color: '#fff' }]}>
-                  {currentAd.cause_and_effect?.cause}
-                </Text>
+                {/* Center Image - only show if not small device */}
+                {!isSmallDevice && (
+                  <Image
+                    source={require('./assets/images/curved-arrow.png')}
+                    style={{
+                      width: scale(40),
+                      height: scale(40),
+                      transform: [{ scaleY: -1 }, { rotate: '-10deg' }],
+                      minWidth: 30,
+                      minHeight: 30
+                    }}
+                  />
+                )}
+
+                {/* Effect Box */}
+                <View style={[styles.extraBox, {
+                  flex: isSmallDevice ? undefined : 1,
+                  width: isSmallDevice ? '100%' : undefined,
+                  height: verticalScale(100) + (isSmallDevice ? -20 : 0),
+                  alignItems: 'center',
+                  backgroundColor: '#dbaad9ff',
+                  borderRadius: 12,
+                  marginLeft: isSmallDevice ? 0 : scale(8),
+                  paddingVertical: verticalScale(12),
+                  borderColor: '#fff',
+                  borderWidth: 1.5,
+                  justifyContent: 'center',
+                  minHeight: 80
+                }]}>
+                  <Text style={[styles.extraText, { color: '#fff' }]}>
+                    {currentAd.cause_and_effect?.effect}
+                  </Text>
+                </View>
               </View>
-              {/* Center Image */}
-              <Image
-                source={require('./assets/images/curved-arrow.png')}
-                style={{
-                  width: 40,
-                  height: 40,
-                  transform: [{ scaleY: -1 }, { rotate: '-10deg' }],
-                }}
-              />
-              {/* Effect Box */}
-              <View style={[styles.extraBox, { flex: 1, height: 120, alignItems: 'center', backgroundColor: '#dbaad9ff', borderRadius: 12, marginLeft: 8, paddingVertical: 12, borderColor: '#fff', borderWidth: 1.5, justifyContent: 'center' }]}>
-                <Text style={[styles.extraText, { color: '#fff' }]}>
-                  {currentAd.cause_and_effect?.effect}
-                </Text>
-              </View>
-            </View>
 
-            <Text style={adStyles.text}>{currentAd.content}</Text>
-
-            {/* Citation link below the row */}
-            {currentAd.citation?.label && (
-              <Text
-                style={[styles.extraText, { color: '#ffbb4dff', textDecorationLine: 'underline', textAlign: 'center', marginTop: 140, fontSize: 18 }]}
-                onPress={() => Linking.openURL(currentAd.citation?.url)}
-              >
-                {currentAd.citation?.label}
+              <Text style={[adStyles.text, {
+                marginTop: verticalScale(30) + (isSmallDevice ? -10 : 0)
+              }]}>
+                {currentAd.content}
               </Text>
-            )}
+
+              {/* Citation link below the row */}
+              {/* Citation fixed at bottom */}
+              {currentAd.citation?.label && (
+                <Text
+                  style={{
+                    position: 'absolute',
+                    bottom: verticalScale(50), // <- keep 50px from bottom
+                    left: 0,
+                    right: 0,
+                    color: '#ffbb4dff',
+                    textDecorationLine: 'underline',
+                    textAlign: 'center',
+                    fontSize: responsiveFont(18, 16, 20),
+                    zIndex: 2000,
+                  }}
+                  onPress={() => Linking.openURL(currentAd.citation?.url)}
+                >
+                  {currentAd.citation?.label}
+                </Text>
+              )}
+            </LinearGradient>
           </ScrollView>
         </MaskedView>
       )}
@@ -369,27 +525,46 @@ const styles = StyleSheet.create({
   },
   title: {
     color: '#fff',
-    fontSize: 22,
+    fontSize: responsiveFont(22),
     fontWeight: 'bold',
-    marginTop: 20,
+    marginTop: verticalScale(20),
     textAlign: 'center',
-    paddingHorizontal: 20,
+    paddingHorizontal: scale(20),
   },
   text: {
     color: '#ddd',
-    fontSize: 16,
-    marginTop: 10,
+    fontSize: responsiveFont(16),
+    marginTop: verticalScale(10),
     textAlign: 'center',
-    paddingHorizontal: 20,
+    paddingHorizontal: scale(20),
   },
   extraBox: {
-    marginTop: 20,
-    paddingHorizontal: 20,
+    marginTop: verticalScale(20),
+    paddingHorizontal: scale(20),
   },
   extraText: {
     color: '#bbb',
-    fontSize: 16,
+    fontSize: responsiveFont(14, 12, 16),
     marginBottom: 5,
+    textAlign: 'center',
+    lineHeight: responsiveFont(18, 16, 22),
+  },
+  imageShadow: {
+    width: scale(180) + (isSmallDevice ? -30 : isLargeDevice ? 20 : 0),
+    height: verticalScale(120) + (isSmallDevice ? -20 : isLargeDevice ? 10 : 0),
+    alignSelf: 'center',
+    marginTop: verticalScale(250) + (isSmallDevice ? -40 : isLargeDevice ? 20 : 0),
+    zIndex: 1,
+    position: 'absolute',
+    minWidth: 120,
+    minHeight: 80,
+    // iOS shadow
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    // Android shadow
+    elevation: 5,
   },
 });
 
