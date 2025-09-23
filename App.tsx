@@ -80,7 +80,7 @@ function AppContent() {
 
   // ⏳ Animated progress value
   const progress = useRef(new Animated.Value(0)).current;
-  const duration = 5000; // 5 seconds
+  const duration = 30000; // 5 seconds
 
   const stylesDidYouKnow = StyleSheet.create({
     container: {
@@ -180,9 +180,9 @@ function AppContent() {
         console.log('Formatted data:', formattedData);
 
         setAds(formattedData);
-        setLoading(false);
       } catch (err) {
-        console.error(err);
+        console.error('Failed to fetch or preload data:', err);
+      } finally {
         setLoading(false);
       }
     };
@@ -191,26 +191,26 @@ function AppContent() {
   }, []);
 
   // 👉 Start animation when ad changes
-useEffect(() => {
-  if (ads.length > 0) {
-    progress.setValue(0);
+  useEffect(() => {
+    if (ads.length > 0) {
+      progress.setValue(0);
 
-    // Run progress bar animation (visual only)
-    Animated.timing(progress, {
-      toValue: 1,
-      duration,
-      easing: Easing.linear,
-      useNativeDriver: false,
-    }).start();
+      // Run progress bar animation (visual only)
+      Animated.timing(progress, {
+        toValue: 1,
+        duration,
+        easing: Easing.linear,
+        useNativeDriver: false,
+      }).start();
 
-    // 🔥 Trigger next screen exactly at `duration`
-    const timer = setTimeout(() => {
-      showNext();   // instant switch
-    }, duration);
+      // 🔥 Trigger next screen exactly at `duration`
+      const timer = setTimeout(() => {
+        showNext();   // instant switch
+      }, duration);
 
-    return () => clearTimeout(timer);
-  }
-}, [currentIndex, ads]);
+      return () => clearTimeout(timer);
+    }
+  }, [currentIndex, ads]);
 
   const showNext = () => {
     if (currentIndex < ads.length - 1) {
@@ -386,7 +386,7 @@ useEffect(() => {
       {currentAd.type === 'flashcard' ? (
         <View style={{
           position: 'absolute',
-          top: verticalScale(-60) + (isSmallDevice ? 20 : 0),
+          top: verticalScale(0) + (isSmallDevice ? 20 : 0),
           left: 0,
           right: 0,
           bottom: 0,
