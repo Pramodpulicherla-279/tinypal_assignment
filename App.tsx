@@ -45,7 +45,7 @@ const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
 // Enhanced responsive scaling utilities
 const baseWidth = 375; // iPhone X width as base
-const baseHeight = 812; // iPhone X height as base
+const baseHeight = 712; // iPhone X height as base
 
 // Scale function for width-based elements
 const scale = (size: number) => (screenWidth / baseWidth) * size;
@@ -242,7 +242,7 @@ function AppContent() {
   const headerBgColor = currentAd.type === 'did_you_know' ? '#ce8ecdff' : '#6764b7ff';
 
   // Responsive positioning calculations
-  const flashcardContentTopPosition = verticalScale(450) + (isSmallDevice ? -60 : isLargeDevice ? 40 : 0);
+  const flashcardContentTopPosition = verticalScale(350) + (isSmallDevice ? -60 : isLargeDevice ? 40 : 0);
   const didYouKnowMaskMargin = verticalScale(210) + (isSmallDevice ? -30 : isLargeDevice ? 20 : 0);
 
   // Mask for 'did_you_know' with an upward curve
@@ -395,7 +395,7 @@ function AppContent() {
           {/* The SVG now acts as a background shape for the text content. */}
           <View style={{
             position: 'absolute',
-            top: verticalScale(60),
+            top: verticalScale(-20),
             left: scale(-10),
             right: scale(-10),
             bottom: 0,
